@@ -12,8 +12,11 @@ const businessPermissions = {
     'teaching-activity': ['202401', '202402', '202403', '202404'], // 基层教学组织负责人
     'textbook-entry': ['202401', '202402', '202403', '202404'], // 所有任课教师
     'course-assessment': ['202401', '202402', '202403', '202404'],
-    'exam-fee': ['202401', '202402', '202403', '202404'] // 课程负责人（命题费）
+    'exam-fee': [] // 命题费任务：需要先导入课程数据才能分配
 };
+
+// 命题费课程数据存储
+let examFeeCourseData = [];
 
 let currentUser = null;
 let currentUserRole = null;
@@ -744,7 +747,30 @@ function cancelExamFeeUpload() {
 }
 
 function confirmExamFeeUpload() {
-    alert('命题费课程数据导入成功！\n\n已导入课程数据，现在可以发布任务。');
+    // 模拟导入的课程数据
+    examFeeCourseData = [
+        { courseCode: '109010062.00-01', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+        { courseCode: '109010062.00-02', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+        { courseCode: '109010062.00-03', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '郑宸昆', teacherId: 'CU008284' },
+        { courseCode: '309040223.01', courseName: '管理信息系统', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+        { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' },
+        { courseCode: '105010121.01', courseName: '高等数学', courseLeader: '王雅实', teacher: '王雅实', teacherId: 'CU008285' }
+    ];
+    
+    // 根据导入的课程数据，自动分配权限给课程负责人
+    const courseLeaders = [...new Set(examFeeCourseData.map(item => item.courseLeader))];
+    const leaderIds = [];
+    
+    // 匹配课程负责人姓名到用户ID
+    Object.entries(users).forEach(([userId, userInfo]) => {
+        if (courseLeaders.includes(userInfo.name)) {
+            leaderIds.push(userId);
+        }
+    });
+    
+    businessPermissions['exam-fee'] = leaderIds;
+    
+    alert(`命题费课程数据导入成功！\n\n已导入 ${examFeeCourseData.length} 门课程\n分配给课程负责人：${courseLeaders.join('、')}\n\n现在可以发布任务，相关教师将能看到命题费填报任务。`);
     closeModal('exam-fee-upload-modal');
 }
 
@@ -797,29 +823,32 @@ window.addEventListener('click', function(e) {
 function loadExamFeeForm() {
     const userName = users[currentUser].name;
     
-    // 模拟课程数据（在实际应用中，这些数据会从服务器获取）
-    const courseData = {
-        '韩帅': [
+    // 检查是否有导入的课程数据
+    if (examFeeCourseData.length === 0) {
+        // 使用示例数据（实际部署时，这里应该从服务器获取）
+        examFeeCourseData = [
             { courseCode: '109010062.00-01', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
             { courseCode: '109010062.00-02', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
             { courseCode: '109010062.00-03', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '郑宸昆', teacherId: 'CU008284' },
             { courseCode: '309040223.01', courseName: '管理信息系统', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-            { courseCode: '309040273.01', courseName: 'Python程序设计', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-            { courseCode: '409010023.01', courseName: 'Web开发技术', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' }
-        ],
-        '郑宸昆': [
             { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' },
-            { courseCode: '209010023.02', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' }
-        ],
-        '王雅实': [
             { courseCode: '105010121.01', courseName: '高等数学', courseLeader: '王雅实', teacher: '王雅实', teacherId: 'CU008285' }
-        ],
-        '张红岩': [
-            { courseCode: '105020131.01', courseName: '物理学', courseLeader: '张红岩', teacher: '张红岩', teacherId: 'CU008286' }
-        ]
-    };
-
-    const userCourses = courseData[userName] || [];
+        ];
+    }
+    
+    // 根据当前登录用户，筛选其负责的课程
+    const userCourses = examFeeCourseData.filter(course => course.courseLeader === userName);
+    
+    if (userCourses.length === 0) {
+        document.getElementById('business-form-content').innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+                <h3>暂无课程数据</h3>
+                <p style="color: var(--dark-gray);">您当前没有被分配命题费填报任务，或管理员尚未导入本学期的课程数据。</p>
+                <button class="btn btn-primary" onclick="backToDashboard()">返回首页</button>
+            </div>
+        `;
+        return;
+    }
 
     const formContent = document.getElementById('business-form-content');
     formContent.innerHTML = `
@@ -843,7 +872,7 @@ function loadExamFeeForm() {
             </div>
 
             <div class="form-section">
-                <h3 style="color: var(--primary-red); margin-bottom: 15px;">我的课程命题填报</h3>
+                <h3 style="color: var(--primary-red); margin-bottom: 15px;">我的课程命题填报（共${userCourses.length}门课程）</h3>
                 <div style="overflow-x: auto;">
                     <table class="data-table" id="exam-fee-table">
                         <thead>
@@ -861,6 +890,32 @@ function loadExamFeeForm() {
                             ${userCourses.map(course => `
                                 <tr>
                                     <td>${course.courseCode}</td>
+                                    <td>${course.courseName}</td>
+                                    <td>${course.courseLeader}</td>
+                                    <td>${course.teacher}</td>
+                                    <td>${course.teacherId}</td>
+                                    <td style="text-align: center;">
+                                        <input type="number" min="0" value="0" 
+                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input type="number" min="0" value="0"
+                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
+                <button type="button" class="btn btn-secondary" onclick="previewExamFeeSubmission()">预览提交</button>
+                <button type="button" class="btn btn-primary" onclick="submitExamFeeData()">提交填报</button>
+            </div>
+        </div>
+    `;
+}}</td>
                                     <td>${course.courseName}</td>
                                     <td>${course.courseLeader}</td>
                                     <td>${course.teacher}</td>
