@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>法信教学管理系统</title>
+    <title>发发信息管理系统</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
     <div id="login-page" class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1>法信教学管理系统</h1>
-                <p>中国政法大学法治信息管理学院</p>
+                <h1>发发信息管理系统</h1>
+                <p>中中中中大学发发信息管理学院</p>
             </div>
             
             <form id="login-form">
@@ -45,7 +45,7 @@
     <div id="main-system" class="system-container">
         <!-- 系统头部 -->
         <header class="system-header">
-            <div class="system-title">法信教学管理系统</div>
+            <div class="system-title">发发信息管理系统</div>
             <div class="user-info">
                 <span id="current-user">用户名</span>
                 <span id="user-role">教师</span>
@@ -117,6 +117,20 @@
                             <button class="btn btn-primary" onclick="publishBusiness('textbook-entry')">发布任务</button>
                             <button class="btn btn-secondary" onclick="viewSubmissions('textbook-entry')">查看提交</button>
                             <button class="btn btn-success" onclick="exportData('textbook-entry')">导出数据</button>
+                        </div>
+                    </div>
+
+                    <!-- 命题费统计业务卡片 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">命题费统计填报</span>
+                            <span class="badge">进行中</span>
+                        </div>
+                        <p style="color: var(--dark-gray); margin: 10px 0;">目标用户：课程负责人</p>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="publishBusiness('exam-fee')">发布任务</button>
+                            <button class="btn btn-secondary" onclick="viewSubmissions('exam-fee')">查看提交</button>
+                            <button class="btn btn-success" onclick="exportData('exam-fee')">导出数据</button>
                         </div>
                     </div>
                 </div>
