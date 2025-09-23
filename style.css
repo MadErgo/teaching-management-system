@@ -468,3 +468,32 @@ legend {
     padding: 0 10px;
     color: var(--primary-red);
 }
+
+/* 命题费表单特殊样式 */
+.exam-fee-form {
+    background: var(--primary-white);
+    border-radius: var(--border-radius);
+}
+
+.exam-fee-form .data-table input {
+    border: 1px solid var(--medium-gray);
+    border-radius: 4px;
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 0.9em;
+    width: 80px;
+}
+
+.exam-fee-form .data-table input:focus {
+    outline: none;
+    border-color: var(--primary-red);
+    box-shadow: 0 0 5px rgba(163, 71, 25, 0.3);
+}
+
+.exam-fee-form .data-table td {
+    vertical-align: middle;
+}
+
+.form-section {
+    margin-bottom: 30px;
+}
