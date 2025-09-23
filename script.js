@@ -1,4 +1,293 @@
-// 模拟数据存储
+// 点击模态框外部关闭
+window.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal')) {
+        e.target.remove();
+    }
+});
+
+// 教材信息录入相关函数
+function showTextbookUpload() {
+    document.getElementById('textbook-upload-modal').style.display = 'block';
+}
+
+function downloadTextbookTemplate() {
+    const templateData = [
+        ['课程号', '课程名', '课程负责人'],
+        ['109010062', '程序设计基础', '韩帅'],
+        ['209010023', '数据结构', '郑宸昆'],
+        ['105010121', '高等数学', '王雅实']
+    ];
+    
+    const csvContent = templateData.map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '教材信息课程数据模板.csv';
+    link.click();
+    
+    alert('教材信息课程数据模板下载成功！\n\n请按照模板格式填写课程信息。');
+}
+
+function handleTextbookFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const previewData = [
+                ['课程号', '课程名', '课程负责人'],
+                ['109010062', '程序设计基础', '韩帅'],
+                ['209010023', '数据结构', '郑宸昆'],
+                ['105010121', '高等数学', '王雅实'],
+                ['105020131', '物理学', '张红岩']
+            ];
+            
+            showTextbookPreview(previewData);
+        } catch (error) {
+            alert('文件解析失败，请检查文件格式');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function showTextbookPreview(data) {
+    const preview = document.getElementById('textbook-upload-preview');
+    const header = document.getElementById('textbook-preview-header');
+    const body = document.getElementById('textbook-preview-body');
+    
+    header.innerHTML = '';
+    body.innerHTML = '';
+    
+    if (data.length > 0) {
+        const headerRow = document.createElement('tr');
+        data[0].forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            headerRow.appendChild(th);
+        });
+        header.appendChild(headerRow);
+        
+        for (let i = 1; i < data.length; i++) {
+            const row = document.createElement('tr');
+            data[i].forEach(cell => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+                row.appendChild(td);
+            });
+            body.appendChild(row);
+        }
+    }
+    
+    preview.classList.remove('hidden');
+}
+
+function cancelTextbookUpload() {
+    document.getElementById('textbook-upload-preview').classList.add('hidden');
+    document.getElementById('textbook-file-upload').value = '';
+}
+
+function confirmTextbookUpload() {
+    textbookCourseData = [
+        { courseCode: '109010062', courseName: '程序设计基础', courseLeader: '韩帅' },
+        { courseCode: '209010023', courseName: '数据结构', courseLeader: '郑宸昆' },
+        { courseCode: '105010121', courseName: '高等数学', courseLeader: '王雅实' },
+        { courseCode: '105020131', courseName: '物理学', courseLeader: '张红岩' }
+    ];
+    
+    const courseLeaders = [...new Set(textbookCourseData.map(item => item.courseLeader))];
+    const leaderIds = [];
+    
+    Object.entries(users).forEach(([userId, userInfo]) => {
+        if (courseLeaders.includes(userInfo.name)) {
+            leaderIds.push(userId);
+        }
+    });
+    
+    businessPermissions['textbook-entry'] = leaderIds;
+    
+    alert(`教材信息课程数据导入成功！\n\n已导入 ${textbookCourseData.length} 门课程\n分配给课程负责人：${courseLeaders.join('、')}\n\n现在可以发布任务，相关教师将能看到教材信息录入任务。`);
+    closeModal('textbook-upload-modal');
+}
+
+function loadTextbookForm() {
+    const userName = users[currentUser].name;
+    
+    if (textbookCourseData.length === 0) {
+        document.getElementById('business-form-content').innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+                <h3>暂无课程数据</h3>
+                <p style="color: var(--dark-gray);">管理员尚未导入本学期的课程数据，请联系管理员。</p>
+                <button class="btn btn-primary" onclick="backToDashboard()">返回首页</button>
+            </div>
+        `;
+        return;
+    }
+    
+    const userCourses = textbookCourseData.filter(course => course.courseLeader === userName);
+    
+    if (userCourses.length === 0) {
+        document.getElementById('business-form-content').innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+                <h3>暂无分配课程</h3>
+                <p style="color: var(--dark-gray);">您当前没有被分配教材信息录入任务。</p>
+                <button class="btn btn-primary" onclick="backToDashboard()">返回首页</button>
+            </div>
+        `;
+        return;
+    }
+
+    const formContent = document.getElementById('business-form-content');
+    formContent.innerHTML = `
+        <div class="textbook-form">
+            <!-- 学期选择模块 -->
+            <div style="background-color: #fdfdfd; padding: 15px 30px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--medium-gray); margin-bottom: 20px;">
+                <select id="textbook-semester-selector" style="background-color: var(--primary-white); border: 1px solid #ced4da; padding: 8px 10px; border-radius: 4px; font-size: 0.9em;">
+                    <option value="25-26-1">2025-2026学年 秋季学期</option>
+                    <option value="24-25-2">2024-2025学年 春季学期</option>
+                    <option value="24-25-1">2024-2025学年 秋季学期</option>
+                </select>
+                <span style="margin-left: auto; font-size: 0.9em; color: #6c757d;">
+                    请选择对应学期的教材信息
+                </span>
+            </div>
+
+            <div class="alert alert-info" style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: var(--border-radius); margin-bottom: 20px;">
+                <strong>填报说明：</strong>请为您负责的课程选择合适的教材，填写完整的教材信息。<br>
+                <strong>注意事项：</strong>出版时间格式为YYYYMM（如202401表示2024年1月），版次请填写阿拉伯数字。
+            </div>
+
+            <div class="form-section">
+                <h3 style="color: var(--primary-red); margin-bottom: 15px;">我的课程教材信息填报（共${userCourses.length}门课程）</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="textbook-table">
+                        <thead>
+                            <tr>
+                                <th>课程号</th>
+                                <th>课程名称</th>
+                                <th>课程负责人</th>
+                                <th>教材名称</th>
+                                <th>主编姓名</th>
+                                <th>出版社</th>
+                                <th>版次</th>
+                                <th>ISBN</th>
+                                <th>出版时间</th>
+                                <th>教材类型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="textbook-table-body">
+                            ${userCourses.map(course => `
+                                <tr>
+                                    <td>${course.courseCode}</td>
+                                    <td>${course.courseName}</td>
+                                    <td>${course.courseLeader}</td>
+                                    <td style="min-width: 150px;">
+                                        <input type="text" placeholder="请输入教材名称" 
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 100px;">
+                                        <input type="text" placeholder="主编姓名" 
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 120px;">
+                                        <input type="text" placeholder="出版社名称" 
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 60px;">
+                                        <input type="number" min="1" placeholder="版次" 
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 120px;">
+                                        <input type="text" placeholder="ISBN号码" maxlength="17"
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 80px;">
+                                        <input type="text" placeholder="202401" maxlength="6" pattern="[0-9]{6}"
+                                               style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                    </td>
+                                    <td style="min-width: 120px;">
+                                        <select style="width: 100%; padding: 5px; border: 1px solid var(--medium-gray); border-radius: 4px;" required>
+                                            <option value="">请选择</option>
+                                            <option value="国家规划教材">国家规划教材</option>
+                                            <option value="部委规划教材">部委规划教材</option>
+                                            <option value="省级规划教材">省级规划教材</option>
+                                            <option value="校级规划教材">校级规划教材</option>
+                                            <option value="经典教材">经典教材</option>
+                                            <option value="一般教材">一般教材</option>
+                                            <option value="自编教材">自编教材</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
+                <button type="button" class="btn btn-secondary" onclick="previewTextbookSubmission()">预览提交</button>
+                <button type="button" class="btn btn-primary" onclick="submitTextbookData()">提交填报</button>
+            </div>
+        </div>
+    `;
+}
+
+function previewTextbookSubmission() {
+    const rows = document.querySelectorAll('#textbook-table-body tr');
+    const userName = users[currentUser].name;
+    const semester = document.getElementById('textbook-semester-selector').options[document.getElementById('textbook-semester-selector').selectedIndex].text;
+    let previewText = `教材信息填报预览 - ${userName}\n学期：${semester}\n\n`;
+    let totalRows = rows.length;
+    let filledRows = 0;
+
+    rows.forEach(row => {
+        const courseCode = row.querySelector('td:first-child').textContent;
+        const courseName = row.querySelector('td:nth-child(2)').textContent;
+        const textbookName = row.querySelector('td:nth-child(4) input').value.trim();
+        const author = row.querySelector('td:nth-child(5) input').value.trim();
+        const publisher = row.querySelector('td:nth-child(6) input').value.trim();
+        const edition = row.querySelector('td:nth-child(7) input').value.trim();
+        const isbn = row.querySelector('td:nth-child(8) input').value.trim();
+        const publishTime = row.querySelector('td:nth-child(9) input').value.trim();
+        const textbookType = row.querySelector('td:nth-child(10) select').value;
+        
+        if (textbookName && author && publisher && edition && isbn && publishTime && textbookType) {
+            filledRows++;
+        }
+        
+        previewText += `${courseCode} ${courseName}\n`;
+        previewText += `  教材名称：${textbookName || '未填写'}\n`;
+        previewText += `  主编：${author || '未填写'}\n`;
+        previewText += `  出版社：${publisher || '未填写'}\n`;
+        previewText += `  版次：${edition || '未填写'}\n`;
+        previewText += `  ISBN：${isbn || '未填写'}\n`;
+        previewText += `  出版时间：${publishTime || '未填写'}\n`;
+        previewText += `  教材类型：${textbookType || '未选择'}\n\n`;
+    });
+
+    previewText += `总课程数：${totalRows}\n已填报课程数：${filledRows}`;
+    alert(previewText);
+}
+
+function submitTextbookData() {
+    const rows = document.querySelectorAll('#textbook-table-body tr');
+    const userName = users[currentUser].name;
+    const semester = document.getElementById('textbook-semester-selector').options[document.getElementById('textbook-semester-selector').selectedIndex].text;
+    let submissionData = [];
+    let filledCount = 0;
+
+    rows.forEach(row => {
+        const courseCode = row.querySelector('td:first-child').textContent;
+        const courseName = row.querySelector('td:nth-child(2)').textContent;
+        const textbookName = row.querySelector('td:nth-child(4) input').value.trim();
+        const author = row.querySelector('td:nth-child(5) input').value.trim();
+        const publisher = row.querySelector('td:nth-child(6) input').value.trim();
+        const edition = row.querySelector('td:nth-child(7) input').value.trim();
+        const isbn = row.querySelector('td:nth-child(8) input').value.trim();
+        const publishTime = row.querySelector('td:nth-child(9) input').value.trim();
+        const textbookType = row.querySelector('td:nth-child(10) select').value;
+        
+        // 模拟数据存储
 const users = {
     'admin': { password: 'admin123', role: 'admin', name: '教务管理员' },
     '202401': { password: '123456', role: 'teacher', name: '韩帅' },
@@ -10,13 +299,15 @@ const users = {
 // 业务权限配置
 const businessPermissions = {
     'teaching-activity': ['202401', '202402', '202403', '202404'],
-    'textbook-entry': ['202401', '202402', '202403', '202404'],
+    'textbook-entry': [], // 教材信息录入：需要先导入课程数据才能分配
     'course-assessment': ['202401', '202402', '202403', '202404'],
     'exam-fee': []
 };
 
 // 命题费课程数据存储
 let examFeeCourseData = [];
+// 教材信息课程数据存储
+let textbookCourseData = [];
 
 let currentUser = null;
 let currentUserRole = null;
@@ -182,6 +473,8 @@ function loadBusinessForm(businessId) {
         
     } else if (businessId === 'exam-fee') {
         loadExamFeeForm();
+    } else if (businessId === 'textbook-entry') {
+        loadTextbookForm();
     } else {
         formContent.innerHTML = `
             <div style="text-align: center; padding: 50px;">
@@ -377,6 +670,11 @@ function publishBusiness(businessId) {
             alert(`无法发布${businessName}任务！\n\n请先上传课程数据，才能分配给相应的课程负责人。`);
             return;
         }
+    } else if (businessId === 'textbook-entry') {
+        if (textbookCourseData.length === 0) {
+            alert(`无法发布${businessName}任务！\n\n请先上传课程数据，才能分配给相应的课程负责人。`);
+            return;
+        }
     }
     
     const targetUsers = businessPermissions[businessId];
@@ -443,6 +741,12 @@ function exportData(businessId) {
         csvData = [
             ['序号', '课序号', '课程名', '上课教师', '工号', '命题份数-综合题', '命题份数-非综合题', '金额'],
             ['1', '109010062.00-01', '程序设计基础', '韩帅', 'CU008228', '2', '0', '200']
+        ];
+    } else if (businessId === 'textbook-entry') {
+        csvData = [
+            ['序号', '课程号', '课程名', '课程负责人', '教材名称', '主编姓名', '出版社', '版次', 'ISBN', '出版时间', '教材类型'],
+            ['1', '109010062', '程序设计基础', '韩帅', 'C程序设计', '谭浩强', '清华大学出版社', '5', '9787302392648', '202001', '国家规划教材'],
+            ['2', '209010023', '数据结构', '郑宸昆', '数据结构(C语言版)', '严蔚敏', '清华大学出版社', '2', '9787302147510', '202003', '经典教材']
         ];
     } else {
         csvData = [
