@@ -11,7 +11,8 @@ const users = {
 const businessPermissions = {
     'teaching-activity': ['202401', '202402', '202403', '202404'], // 基层教学组织负责人
     'textbook-entry': ['202401', '202402', '202403', '202404'], // 所有任课教师
-    'course-assessment': ['202401', '202402', '202403', '202404']
+    'course-assessment': ['202401', '202402', '202403', '202404'],
+    'exam-fee': ['202401', '202402', '202403', '202404'] // 课程负责人（命题费）
 };
 
 let currentUser = null;
@@ -116,7 +117,8 @@ function getBusinessName(businessId) {
     const names = {
         'teaching-activity': '基层教学组织活动开展计划',
         'textbook-entry': '教材信息录入',
-        'course-assessment': '课程考核备案'
+        'course-assessment': '课程考核备案',
+        'exam-fee': '命题费统计填报'
     };
     return names[businessId] || businessId;
 }
@@ -145,7 +147,7 @@ function loadBusinessForm(businessId) {
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px 20px;">
                             <div class="form-group">
                                 <label>学院</label>
-                                <input type="text" value="法治信息管理学院" disabled>
+                                <input type="text" value="发发信息管理学院" disabled>
                             </div>
                             <div class="form-group">
                                 <label>基层教学组织名称</label>
@@ -188,6 +190,10 @@ function loadBusinessForm(businessId) {
             submitBusinessForm(businessId);
         });
         
+    } else if (businessId === 'exam-fee') {
+        // 加载命题费统计表单
+        loadExamFeeForm();
+        
     } else {
         // 其他业务表单的占位符
         formContent.innerHTML = `
@@ -203,7 +209,7 @@ function loadBusinessForm(businessId) {
 function getOrgName(userId) {
     const orgMap = {
         '202401': '计算机教研室',
-        '202402': '法治信息管理教研室', 
+        '202402': '发发信息管理教研室', 
         '202403': '应用数学教研室',
         '202404': '自然科学教研室'
     };
@@ -285,15 +291,19 @@ function updateActivityNumbers() {
 }
 
 function submitBusinessForm(businessId) {
-    const activities = collectActivityData();
-    if (activities.length === 0) {
-        alert('请至少添加一个活动！');
-        return;
+    if (businessId === 'teaching-activity') {
+        const activities = collectActivityData();
+        if (activities.length === 0) {
+            alert('请至少添加一个活动！');
+            return;
+        }
+        
+        // 模拟提交到服务器
+        console.log('提交数据:', activities);
+        alert(`表单提交成功！\n\n业务类型：${getBusinessName(businessId)}\n活动数量：${activities.length}`);
+    } else {
+        alert(`${getBusinessName(businessId)} 提交成功！`);
     }
-    
-    // 模拟提交到服务器
-    console.log('提交数据:', activities);
-    alert(`表单提交成功！\n\n业务类型：${getBusinessName(businessId)}\n活动数量：${activities.length}`);
     
     // 返回首页
     backToDashboard();
@@ -314,7 +324,7 @@ function collectActivityData() {
         if (name && date && startTime && endTime && location) {
             activities.push({
                 序号: index + 1,
-                学院: '法治信息管理学院',
+                学院: '发发信息管理学院',
                 基层教学组织名称: getOrgName(currentUser),
                 负责人: users[currentUser].name,
                 活动名称及形式: name,
@@ -472,12 +482,22 @@ function viewSubmissions(businessId) {
 function exportData(businessId) {
     const businessName = getBusinessName(businessId);
     
-    // 模拟导出数据
-    const csvData = [
-        ['序号', '学院', '基层教学组织名称', '负责人', '活动名称及形式', '日期', '时间', '地点', '备注'],
-        ['1', '法治信息管理学院', '计算机教研室', '韩帅', '教学研讨会', '9月15日', '14:00—16:00', '逸夫楼2062', ''],
-        ['2', '法治信息管理学院', '法治信息管理教研室', '郑宸昆', '集体备课', '9月20日', '13:30—15:00', '线上', '腾讯会议']
-    ];
+    if (businessId === 'exam-fee') {
+        // 命题费导出
+        const csvData = [
+            ['序号', '课序号', '课程名', '上课教师', '工号', '命题份数-综合题', '命题份数-非综合题', '金额'],
+            ['1', '109010062.00-01', '程序设计基础', '韩帅', 'CU008228', '2', '0', '200'],
+            ['2', '109010062.00-03', '程序设计基础', '郑宸昆', 'CU008284', '2', '0', '200'],
+            ['3', '309040223.01', '管理信息系统', '韩帅', 'CU008228', '0', '1', '60']
+        ];
+    } else {
+        // 其他业务导出
+        const csvData = [
+            ['序号', '学院', '基层教学组织名称', '负责人', '活动名称及形式', '日期', '时间', '地点', '备注'],
+            ['1', '发发信息管理学院', '计算机教研室', '韩帅', '教学研讨会', '9月15日', '14:00—16:00', '逸夫楼2062', ''],
+            ['2', '发发信息管理学院', '发发信息管理教研室', '郑宸昆', '集体备课', '9月20日', '13:30—15:00', '线上', '腾讯会议']
+        ];
+    }
     
     const csvContent = csvData.map(row => row.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -596,3 +616,202 @@ window.addEventListener('click', function(e) {
         e.target.remove();
     }
 });
+
+// 命题费管理相关函数
+function loadExamFeeForm() {
+    const userName = users[currentUser].name;
+    
+    // 模拟课程数据（在实际应用中，这些数据会从服务器获取）
+    const courseData = {
+        '韩帅': [
+            { courseCode: '109010062.00-01', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+            { courseCode: '109010062.00-02', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+            { courseCode: '109010062.00-03', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '郑宸昆', teacherId: 'CU008284' },
+            { courseCode: '309040223.01', courseName: '管理信息系统', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+            { courseCode: '309040273.01', courseName: 'Python程序设计', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
+            { courseCode: '409010023.01', courseName: 'Web开发技术', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' }
+        ],
+        '郑宸昆': [
+            { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' },
+            { courseCode: '209010023.02', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' }
+        ],
+        '王雅实': [
+            { courseCode: '105010121.01', courseName: '高等数学', courseLeader: '王雅实', teacher: '王雅实', teacherId: 'CU008285' }
+        ],
+        '张红岩': [
+            { courseCode: '105020131.01', courseName: '物理学', courseLeader: '张红岩', teacher: '张红岩', teacherId: 'CU008286' }
+        ]
+    };
+
+    const userCourses = courseData[userName] || [];
+
+    const formContent = document.getElementById('business-form-content');
+    formContent.innerHTML = `
+        <div class="exam-fee-form">
+            <div class="alert alert-info" style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: var(--border-radius); margin-bottom: 20px;">
+                <strong>填报说明：</strong>多课头课程由课程负责人填报，请知悉。您只需填写"综合题份数"或"非综合题份数"即可。<br>
+                <strong>计费标准：</strong>综合题 100元/份，非综合题 60元/份
+            </div>
+
+            <div class="form-section">
+                <h3 style="color: var(--primary-red); margin-bottom: 15px;">我的课程命题填报</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="exam-fee-table">
+                        <thead>
+                            <tr>
+                                <th>课序号</th>
+                                <th>课程名称</th>
+                                <th>课程负责人</th>
+                                <th>上课教师</th>
+                                <th>工号</th>
+                                <th>综合题份数</th>
+                                <th>非综合题份数</th>
+                                <th>预计金额</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exam-fee-table-body">
+                            ${userCourses.map(course => `
+                                <tr>
+                                    <td>${course.courseCode}</td>
+                                    <td>${course.courseName}</td>
+                                    <td>${course.courseLeader}</td>
+                                    <td>${course.teacher}</td>
+                                    <td>${course.teacherId}</td>
+                                    <td style="text-align: center;">
+                                        <input type="number" min="0" value="0" 
+                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;"
+                                               onchange="updateExamFeeCalculation('${course.courseCode}')">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input type="number" min="0" value="0"
+                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;"
+                                               onchange="updateExamFeeCalculation('${course.courseCode}')">
+                                    </td>
+                                    <td style="text-align: center;" id="amount-${course.courseCode}">¥0</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
+                <div style="margin-bottom: 15px;">
+                    <strong>总计金额：<span id="total-exam-fee" style="color: var(--primary-red); font-size: 1.2em;">¥0</span></strong>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="previewExamFeeSubmission()">预览提交</button>
+                <button type="button" class="btn btn-primary" onclick="submitExamFeeData()">提交填报</button>
+            </div>
+        </div>
+    `;
+}
+
+function updateExamFeeCalculation(courseCode) {
+    const rows = document.querySelectorAll('#exam-fee-table-body tr');
+    let targetRow = null;
+    
+    rows.forEach(row => {
+        if (row.querySelector('td:first-child').textContent === courseCode) {
+            targetRow = row;
+        }
+    });
+    
+    if (!targetRow) return;
+
+    const comprehensiveInput = targetRow.querySelector('td:nth-child(6) input');
+    const regularInput = targetRow.querySelector('td:nth-child(7) input');
+    const amountCell = document.getElementById(`amount-${courseCode}`);
+
+    const comprehensiveCount = parseInt(comprehensiveInput.value) || 0;
+    const regularCount = parseInt(regularInput.value) || 0;
+    const amount = comprehensiveCount * 100 + regularCount * 60;
+
+    amountCell.textContent = `¥${amount}`;
+
+    // 更新总计
+    updateTotalExamFee();
+}
+
+function updateTotalExamFee() {
+    const amountCells = document.querySelectorAll('[id^="amount-"]');
+    let total = 0;
+    
+    amountCells.forEach(cell => {
+        const amount = parseInt(cell.textContent.replace('¥', '')) || 0;
+        total += amount;
+    });
+
+    document.getElementById('total-exam-fee').textContent = `¥${total}`;
+}
+
+function previewExamFeeSubmission() {
+    const rows = document.querySelectorAll('#exam-fee-table-body tr');
+    const userName = users[currentUser].name;
+    let previewText = `命题费填报预览 - ${userName}\n\n`;
+    let hasData = false;
+
+    rows.forEach(row => {
+        const courseCode = row.querySelector('td:first-child').textContent;
+        const courseName = row.querySelector('td:nth-child(2)').textContent;
+        const teacher = row.querySelector('td:nth-child(4)').textContent;
+        const comprehensiveCount = parseInt(row.querySelector('td:nth-child(6) input').value) || 0;
+        const regularCount = parseInt(row.querySelector('td:nth-child(7) input').value) || 0;
+        
+        if (comprehensiveCount > 0 || regularCount > 0) {
+            hasData = true;
+            previewText += `${courseCode} ${courseName}\n`;
+            previewText += `  上课教师：${teacher}\n`;
+            if (comprehensiveCount > 0) {
+                previewText += `  综合题：${comprehensiveCount}份 (¥${comprehensiveCount * 100})\n`;
+            }
+            if (regularCount > 0) {
+                previewText += `  非综合题：${regularCount}份 (¥${regularCount * 60})\n`;
+            }
+            previewText += '\n';
+        }
+    });
+
+    if (!hasData) {
+        alert('请至少填写一门课程的命题数据');
+        return;
+    }
+
+    const totalAmount = document.getElementById('total-exam-fee').textContent;
+    previewText += `总计金额：${totalAmount}`;
+
+    alert(previewText);
+}
+
+function submitExamFeeData() {
+    const rows = document.querySelectorAll('#exam-fee-table-body tr');
+    const userName = users[currentUser].name;
+    let hasData = false;
+    let submissionData = [];
+
+    rows.forEach(row => {
+        const courseCode = row.querySelector('td:first-child').textContent;
+        const comprehensiveCount = parseInt(row.querySelector('td:nth-child(6) input').value) || 0;
+        const regularCount = parseInt(row.querySelector('td:nth-child(7) input').value) || 0;
+        
+        if (comprehensiveCount > 0 || regularCount > 0) {
+            hasData = true;
+            submissionData.push({
+                courseCode,
+                comprehensiveCount,
+                regularCount,
+                amount: comprehensiveCount * 100 + regularCount * 60
+            });
+        }
+    });
+
+    if (!hasData) {
+        alert('请至少填写一门课程的命题数据');
+        return;
+    }
+
+    const totalAmount = document.getElementById('total-exam-fee').textContent;
+    alert(`命题费填报提交成功！\n\n提交人：${userName}\n课程数量：${submissionData.length}\n总金额：${totalAmount}\n\n数据已保存，管理员可查看和导出。`);
+    
+    // 返回首页
+    backToDashboard();
+}
