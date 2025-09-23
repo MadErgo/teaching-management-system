@@ -9,10 +9,10 @@ const users = {
 
 // 业务权限配置
 const businessPermissions = {
-    'teaching-activity': ['202401', '202402', '202403', '202404'], // 基层教学组织负责人
-    'textbook-entry': ['202401', '202402', '202403', '202404'], // 所有任课教师
+    'teaching-activity': ['202401', '202402', '202403', '202404'],
+    'textbook-entry': ['202401', '202402', '202403', '202404'],
     'course-assessment': ['202401', '202402', '202403', '202404'],
-    'exam-fee': [] // 命题费任务：需要先导入课程数据才能分配
+    'exam-fee': []
 };
 
 // 命题费课程数据存储
@@ -23,7 +23,6 @@ let currentUserRole = null;
 
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
-    // 检查是否已登录
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = savedUser;
@@ -31,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showMainSystem();
     }
 
-    // 登录表单提交
     document.getElementById('login-form').addEventListener('submit', function(e) {
         e.preventDefault();
         handleLogin();
@@ -59,11 +57,9 @@ function showMainSystem() {
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('main-system').style.display = 'block';
     
-    // 设置用户信息
     document.getElementById('current-user').textContent = users[currentUser].name;
     document.getElementById('user-role').textContent = currentUserRole === 'admin' ? '管理员' : '教师';
     
-    // 显示对应的仪表板
     if (currentUserRole === 'admin') {
         document.getElementById('teacher-dashboard').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
@@ -78,18 +74,16 @@ function loadTeacherTasks() {
     const pendingTasksList = document.getElementById('pending-tasks');
     const completedTasksList = document.getElementById('completed-tasks');
     
-    // 清空现有任务
     pendingTasksList.innerHTML = '';
     completedTasksList.innerHTML = '';
     
     let pendingCount = 0;
     let completedCount = 0;
     
-    // 根据用户权限加载任务
     for (const [businessId, allowedUsers] of Object.entries(businessPermissions)) {
         if (allowedUsers.includes(currentUser)) {
             const businessName = getBusinessName(businessId);
-            const isCompleted = Math.random() > 0.5; // 模拟完成状态
+            const isCompleted = Math.random() > 0.5;
             
             const taskItem = document.createElement('li');
             taskItem.className = 'task-item';
@@ -136,8 +130,6 @@ function openBusiness(businessId) {
     document.getElementById('business-form-page').classList.remove('hidden');
     
     document.getElementById('business-title').textContent = getBusinessName(businessId);
-    
-    // 加载具体的业务表单
     loadBusinessForm(businessId);
 }
 
@@ -145,7 +137,6 @@ function loadBusinessForm(businessId) {
     const formContent = document.getElementById('business-form-content');
     
     if (businessId === 'teaching-activity') {
-        // 加载基层教学组织活动表单
         formContent.innerHTML = `
             <div class="form-content">
                 <form id="activity-plan-form">
@@ -158,7 +149,7 @@ function loadBusinessForm(businessId) {
                             </div>
                             <div class="form-group">
                                 <label>基层教学组织名称</label>
-                                <input type="text" id="org-name" value="${getOrgName(currentUser)}" disabled>
+                                <input type="text" value="${getOrgName(currentUser)}" disabled>
                             </div>
                             <div class="form-group">
                                 <label>负责人</label>
@@ -166,17 +157,11 @@ function loadBusinessForm(businessId) {
                             </div>
                         </div>
                     </fieldset>
-                    
                     <fieldset>
                         <legend>活动详情</legend>
-                        <div id="activity-list">
-                            <!-- 活动项目将在这里动态添加 -->
-                        </div>
-                        <div class="add-activity" onclick="addActivityItem()">
-                            + 添加新活动
-                        </div>
+                        <div id="activity-list"></div>
+                        <div class="add-activity" onclick="addActivityItem()">+ 添加新活动</div>
                     </fieldset>
-                    
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" onclick="previewForm()">预览</button>
                         <button type="submit" class="btn btn-primary">提交表单</button>
@@ -185,24 +170,19 @@ function loadBusinessForm(businessId) {
             </div>
         `;
         
-        // 添加默认活动项
         setTimeout(() => {
             addActivityItem();
             addActivityItem();
         }, 100);
         
-        // 绑定表单提交事件
         document.getElementById('activity-plan-form').addEventListener('submit', function(e) {
             e.preventDefault();
             submitBusinessForm(businessId);
         });
         
     } else if (businessId === 'exam-fee') {
-        // 加载命题费统计表单
         loadExamFeeForm();
-        
     } else {
-        // 其他业务表单的占位符
         formContent.innerHTML = `
             <div style="text-align: center; padding: 50px;">
                 <h3>此业务表单正在开发中</h3>
@@ -247,13 +227,9 @@ function addActivityItem() {
             <div class="form-group">
                 <label>时间 *</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <select class="start-time" required>
-                        ${generateTimeOptions()}
-                    </select>
+                    <select class="start-time" required>${generateTimeOptions()}</select>
                     <span>—</span>
-                    <select class="end-time" required>
-                        ${generateTimeOptions()}
-                    </select>
+                    <select class="end-time" required>${generateTimeOptions()}</select>
                 </div>
             </div>
             <div class="form-group">
@@ -304,15 +280,10 @@ function submitBusinessForm(businessId) {
             alert('请至少添加一个活动！');
             return;
         }
-        
-        // 模拟提交到服务器
-        console.log('提交数据:', activities);
         alert(`表单提交成功！\n\n业务类型：${getBusinessName(businessId)}\n活动数量：${activities.length}`);
     } else {
         alert(`${getBusinessName(businessId)} 提交成功！`);
     }
-    
-    // 返回首页
     backToDashboard();
 }
 
@@ -363,15 +334,8 @@ function previewForm() {
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>序号</th>
-                            <th>学院</th>
-                            <th>基层教学组织名称</th>
-                            <th>负责人</th>
-                            <th>活动名称及形式</th>
-                            <th>日期</th>
-                            <th>时间</th>
-                            <th>地点</th>
-                            <th>备注</th>
+                            <th>序号</th><th>学院</th><th>基层教学组织名称</th><th>负责人</th>
+                            <th>活动名称及形式</th><th>日期</th><th>时间</th><th>地点</th><th>备注</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -380,26 +344,14 @@ function previewForm() {
     activities.forEach(activity => {
         previewHtml += `
             <tr>
-                <td>${activity.序号}</td>
-                <td>${activity.学院}</td>
-                <td>${activity.基层教学组织名称}</td>
-                <td>${activity.负责人}</td>
-                <td>${activity.活动名称及形式}</td>
-                <td>${activity.日期}</td>
-                <td>${activity.时间}</td>
-                <td>${activity.地点}</td>
-                <td>${activity.备注}</td>
+                <td>${activity.序号}</td><td>${activity.学院}</td><td>${activity.基层教学组织名称}</td>
+                <td>${activity.负责人}</td><td>${activity.活动名称及形式}</td><td>${activity.日期}</td>
+                <td>${activity.时间}</td><td>${activity.地点}</td><td>${activity.备注}</td>
             </tr>
         `;
     });
     
-    previewHtml += `
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-    
+    previewHtml += `</tbody></table></div></div>`;
     document.body.insertAdjacentHTML('beforeend', previewHtml);
 }
 
@@ -419,6 +371,14 @@ function viewHistory(businessId) {
 
 function publishBusiness(businessId) {
     const businessName = getBusinessName(businessId);
+    
+    if (businessId === 'exam-fee') {
+        if (examFeeCourseData.length === 0) {
+            alert(`无法发布${businessName}任务！\n\n请先上传课程数据，才能分配给相应的课程负责人。`);
+            return;
+        }
+    }
+    
     const targetUsers = businessPermissions[businessId];
     const userNames = targetUsers.map(id => users[id]?.name || id).join('、');
     
@@ -430,7 +390,6 @@ function publishBusiness(businessId) {
 function viewSubmissions(businessId) {
     const businessName = getBusinessName(businessId);
     
-    // 模拟提交数据
     const submissions = [
         { user: '韩帅', submitTime: '2025-09-20 14:30', status: '已提交' },
         { user: '郑宸昆', submitTime: '2025-09-19 16:45', status: '已提交' },
@@ -447,12 +406,7 @@ function viewSubmissions(businessId) {
                 </div>
                 <table class="data-table">
                     <thead>
-                        <tr>
-                            <th>教师姓名</th>
-                            <th>提交时间</th>
-                            <th>状态</th>
-                            <th>操作</th>
-                        </tr>
+                        <tr><th>教师姓名</th><th>提交时间</th><th>状态</th><th>操作</th></tr>
                     </thead>
                     <tbody>
     `;
@@ -463,12 +417,7 @@ function viewSubmissions(businessId) {
                 <td>${sub.user}</td>
                 <td>${sub.submitTime || '-'}</td>
                 <td><span class="badge ${sub.status === '已提交' ? 'completed' : 'pending'}">${sub.status}</span></td>
-                <td>
-                    ${sub.status === '已提交' ? 
-                        '<button class="btn btn-secondary">查看详情</button>' : 
-                        '<button class="btn btn-primary">催办</button>'
-                    }
-                </td>
+                <td>${sub.status === '已提交' ? '<button class="btn btn-secondary">查看详情</button>' : '<button class="btn btn-primary">催办</button>'}</td>
             </tr>
         `;
     });
@@ -489,20 +438,16 @@ function viewSubmissions(businessId) {
 function exportData(businessId) {
     const businessName = getBusinessName(businessId);
     
+    let csvData;
     if (businessId === 'exam-fee') {
-        // 命题费导出
-        const csvData = [
+        csvData = [
             ['序号', '课序号', '课程名', '上课教师', '工号', '命题份数-综合题', '命题份数-非综合题', '金额'],
-            ['1', '109010062.00-01', '程序设计基础', '韩帅', 'CU008228', '2', '0', '200'],
-            ['2', '109010062.00-03', '程序设计基础', '郑宸昆', 'CU008284', '2', '0', '200'],
-            ['3', '309040223.01', '管理信息系统', '韩帅', 'CU008228', '0', '1', '60']
+            ['1', '109010062.00-01', '程序设计基础', '韩帅', 'CU008228', '2', '0', '200']
         ];
     } else {
-        // 其他业务导出
-        const csvData = [
+        csvData = [
             ['序号', '学院', '基层教学组织名称', '负责人', '活动名称及形式', '日期', '时间', '地点', '备注'],
-            ['1', '发发信息管理学院', '计算机教研室', '韩帅', '教学研讨会', '9月15日', '14:00—16:00', '逸夫楼2062', ''],
-            ['2', '发发信息管理学院', '发发信息管理教研室', '郑宸昆', '集体备课', '9月20日', '13:30—15:00', '线上', '腾讯会议']
+            ['1', '发发信息管理学院', '计算机教研室', '韩帅', '教学研讨会', '9月15日', '14:00—16:00', '逸夫楼2062', '']
         ];
     }
     
@@ -513,7 +458,7 @@ function exportData(businessId) {
     link.download = `${businessName}_导出数据_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     
-    alert(`数据导出成功！\n\n业务：${businessName}\n文件名：${businessName}_导出数据_${new Date().toISOString().split('T')[0]}.csv`);
+    alert(`数据导出成功！\n\n业务：${businessName}`);
 }
 
 function showUserManagement() {
@@ -567,19 +512,13 @@ function showAddUser() {
         const userPassword = document.getElementById('new-user-password').value;
         const userRole = document.getElementById('new-user-role').value;
         
-        // 添加到用户数据中
-        users[userId] = {
-            password: userPassword,
-            role: userRole,
-            name: userName
-        };
+        users[userId] = { password: userPassword, role: userRole, name: userName };
         
         alert(`用户添加成功！\n\n工号：${userId}\n姓名：${userName}\n初始密码：${userPassword}`);
         closeModal('add-user-modal');
     });
 }
 
-// 批量导入用户相关函数
 function showBatchImportUsers() {
     document.getElementById('batch-import-users-modal').style.display = 'block';
 }
@@ -598,30 +537,20 @@ function downloadUserTemplate() {
     link.download = '用户导入模板.csv';
     link.click();
     
-    alert('用户导入模板下载成功！\n\n请按照模板格式填写用户信息。');
+    alert('用户导入模板下载成功！');
 }
 
 function handleUsersFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            // 模拟解析Excel文件
-            const previewData = [
-                ['工号', '姓名', '初始密码', '角色'],
-                ['202405', '张三', '123456', 'teacher'],
-                ['202406', '李四', '123456', 'admin'],
-                ['202407', '王五', '123456', 'teacher']
-            ];
-            
-            showUsersPreview(previewData);
-        } catch (error) {
-            alert('文件解析失败，请检查文件格式');
-        }
-    };
-    reader.readAsArrayBuffer(file);
+    const previewData = [
+        ['工号', '姓名', '初始密码', '角色'],
+        ['202405', '张三', '123456', 'teacher'],
+        ['202406', '李四', '123456', 'admin']
+    ];
+    
+    showUsersPreview(previewData);
 }
 
 function showUsersPreview(data) {
@@ -641,7 +570,7 @@ function showUsersPreview(data) {
         });
         header.appendChild(headerRow);
         
-        for (let i = 1; i < Math.min(data.length, 11); i++) {
+        for (let i = 1; i < data.length; i++) {
             const row = document.createElement('tr');
             data[i].forEach(cell => {
                 const td = document.createElement('td');
@@ -661,11 +590,10 @@ function cancelUsersUpload() {
 }
 
 function confirmUsersUpload() {
-    alert('用户批量导入成功！\n\n已导入 3 个用户账号。');
+    alert('用户批量导入成功！\n\n已导入用户账号。');
     closeModal('batch-import-users-modal');
 }
 
-// 命题费数据上传相关函数
 function showExamFeeUpload() {
     document.getElementById('exam-fee-upload-modal').style.display = 'block';
 }
@@ -674,8 +602,7 @@ function downloadExamFeeTemplate() {
     const templateData = [
         ['课序号', '课程名', '课程负责人', '上课教师', '工号'],
         ['109010062.00-01', '程序设计基础', '韩帅', '韩帅', 'CU008228'],
-        ['109010062.00-02', '程序设计基础', '韩帅', '韩帅', 'CU008228'],
-        ['109010062.00-03', '程序设计基础', '韩帅', '郑宸昆', 'CU008284']
+        ['109010062.00-02', '程序设计基础', '韩帅', '韩帅', 'CU008228']
     ];
     
     const csvContent = templateData.map(row => row.join(',')).join('\n');
@@ -685,29 +612,20 @@ function downloadExamFeeTemplate() {
     link.download = '命题费课程数据模板.csv';
     link.click();
     
-    alert('命题费课程数据模板下载成功！\n\n请按照模板格式填写课程信息。');
+    alert('命题费课程数据模板下载成功！');
 }
 
 function handleExamFeeFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const previewData = [
-                ['课序号', '课程名', '课程负责人', '上课教师', '工号'],
-                ['109010062.00-01', '程序设计基础', '韩帅', '韩帅', 'CU008228'],
-                ['109010062.00-02', '程序设计基础', '韩帅', '韩帅', 'CU008228'],
-                ['109010062.00-03', '程序设计基础', '韩帅', '郑宸昆', 'CU008284']
-            ];
-            
-            showExamFeePreview(previewData);
-        } catch (error) {
-            alert('文件解析失败，请检查文件格式');
-        }
-    };
-    reader.readAsArrayBuffer(file);
+    const previewData = [
+        ['课序号', '课程名', '课程负责人', '上课教师', '工号'],
+        ['109010062.00-01', '程序设计基础', '韩帅', '韩帅', 'CU008228'],
+        ['109010062.00-02', '程序设计基础', '韩帅', '韩帅', 'CU008228']
+    ];
+    
+    showExamFeePreview(previewData);
 }
 
 function showExamFeePreview(data) {
@@ -727,7 +645,7 @@ function showExamFeePreview(data) {
         });
         header.appendChild(headerRow);
         
-        for (let i = 1; i < Math.min(data.length, 11); i++) {
+        for (let i = 1; i < data.length; i++) {
             const row = document.createElement('tr');
             data[i].forEach(cell => {
                 const td = document.createElement('td');
@@ -747,21 +665,15 @@ function cancelExamFeeUpload() {
 }
 
 function confirmExamFeeUpload() {
-    // 模拟导入的课程数据
     examFeeCourseData = [
         { courseCode: '109010062.00-01', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
         { courseCode: '109010062.00-02', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-        { courseCode: '109010062.00-03', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '郑宸昆', teacherId: 'CU008284' },
-        { courseCode: '309040223.01', courseName: '管理信息系统', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-        { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' },
-        { courseCode: '105010121.01', courseName: '高等数学', courseLeader: '王雅实', teacher: '王雅实', teacherId: 'CU008285' }
+        { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' }
     ];
     
-    // 根据导入的课程数据，自动分配权限给课程负责人
     const courseLeaders = [...new Set(examFeeCourseData.map(item => item.courseLeader))];
     const leaderIds = [];
     
-    // 匹配课程负责人姓名到用户ID
     Object.entries(users).forEach(([userId, userInfo]) => {
         if (courseLeaders.includes(userInfo.name)) {
             leaderIds.push(userId);
@@ -770,230 +682,26 @@ function confirmExamFeeUpload() {
     
     businessPermissions['exam-fee'] = leaderIds;
     
-    alert(`命题费课程数据导入成功！\n\n已导入 ${examFeeCourseData.length} 门课程\n分配给课程负责人：${courseLeaders.join('、')}\n\n现在可以发布任务，相关教师将能看到命题费填报任务。`);
+    alert(`命题费课程数据导入成功！\n\n已导入 ${examFeeCourseData.length} 门课程\n分配给课程负责人：${courseLeaders.join('、')}`);
     closeModal('exam-fee-upload-modal');
 }
 
-function exportUsers() {
-    const userData = Object.entries(users).map(([id, info]) => [
-        id, info.name, info.role === 'admin' ? '管理员' : '教师', '正常'
-    ]);
-    
-    const csvData = [
-        ['工号', '姓名', '角色', '状态'],
-        ...userData
-    ];
-    
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `用户列表_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.remove();
-    }
-}
-
-function logout() {
-    localStorage.removeItem('currentUser');
-    currentUser = null;
-    currentUserRole = null;
-    
-    document.getElementById('main-system').style.display = 'none';
-    document.getElementById('login-page').style.display = 'flex';
-    
-    // 清空登录表单
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-}
-
-// 点击模态框外部关闭
-window.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal')) {
-        e.target.remove();
-    }
-});
-
-// 命题费管理相关函数
 function loadExamFeeForm() {
     const userName = users[currentUser].name;
     
-    // 检查是否有导入的课程数据
     if (examFeeCourseData.length === 0) {
-        // 使用示例数据（实际部署时，这里应该从服务器获取）
-        examFeeCourseData = [
-            { courseCode: '109010062.00-01', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-            { courseCode: '109010062.00-02', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-            { courseCode: '109010062.00-03', courseName: '程序设计基础', courseLeader: '韩帅', teacher: '郑宸昆', teacherId: 'CU008284' },
-            { courseCode: '309040223.01', courseName: '管理信息系统', courseLeader: '韩帅', teacher: '韩帅', teacherId: 'CU008228' },
-            { courseCode: '209010023.01', courseName: '数据结构', courseLeader: '郑宸昆', teacher: '郑宸昆', teacherId: 'CU008284' },
-            { courseCode: '105010121.01', courseName: '高等数学', courseLeader: '王雅实', teacher: '王雅实', teacherId: 'CU008285' }
-        ];
-    }
-    
-    // 根据当前登录用户，筛选其负责的课程
-    const userCourses = examFeeCourseData.filter(course => course.courseLeader === userName);
-    
-    if (userCourses.length === 0) {
         document.getElementById('business-form-content').innerHTML = `
             <div style="text-align: center; padding: 50px;">
                 <h3>暂无课程数据</h3>
-                <p style="color: var(--dark-gray);">您当前没有被分配命题费填报任务，或管理员尚未导入本学期的课程数据。</p>
+                <p style="color: var(--dark-gray);">管理员尚未导入本学期的课程数据，请联系管理员。</p>
                 <button class="btn btn-primary" onclick="backToDashboard()">返回首页</button>
             </div>
         `;
         return;
     }
-
+    
+    const userCourses = examFeeCourseData.filter(course => course.courseLeader === userName);
+    
     const formContent = document.getElementById('business-form-content');
     formContent.innerHTML = `
         <div class="exam-fee-form">
-            <!-- 学期选择模块 -->
-            <div style="background-color: #fdfdfd; padding: 15px 30px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--medium-gray); margin-bottom: 20px;">
-                <select id="exam-semester-selector" style="background-color: var(--primary-white); border: 1px solid #ced4da; padding: 8px 10px; border-radius: 4px; font-size: 0.9em;">
-                    <option value="25-26-1">2025-2026学年 秋季学期</option>
-                    <option value="24-25-2">2024-2025学年 春季学期</option>
-                    <option value="24-25-1">2024-2025学年 秋季学期</option>
-                </select>
-                <span style="margin-left: auto; font-size: 0.9em; color: #6c757d;">
-                    请选择对应学期的命题费数据
-                </span>
-            </div>
-
-            <div class="alert alert-info" style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: var(--border-radius); margin-bottom: 20px;">
-                <strong>填报说明：</strong>多课头课程由课程负责人填报，请知悉。您只需填写"综合题份数"或"非综合题份数"即可。<br>
-                <strong>特别提醒：</strong>多课头可以把出题数量填写在一个课头下。<br>
-                <strong>计费标准：</strong>综合题 100元/份，非综合题 60元/份
-            </div>
-
-            <div class="form-section">
-                <h3 style="color: var(--primary-red); margin-bottom: 15px;">我的课程命题填报（共${userCourses.length}门课程）</h3>
-                <div style="overflow-x: auto;">
-                    <table class="data-table" id="exam-fee-table">
-                        <thead>
-                            <tr>
-                                <th>课序号</th>
-                                <th>课程名称</th>
-                                <th>课程负责人</th>
-                                <th>上课教师</th>
-                                <th>工号</th>
-                                <th>综合题份数</th>
-                                <th>非综合题份数</th>
-                            </tr>
-                        </thead>
-                        <tbody id="exam-fee-table-body">
-                            ${userCourses.map(course => `
-                                <tr>
-                                    <td>${course.courseCode}</td>
-                                    <td>${course.courseName}</td>
-                                    <td>${course.courseLeader}</td>
-                                    <td>${course.teacher}</td>
-                                    <td>${course.teacherId}</td>
-                                    <td style="text-align: center;">
-                                        <input type="number" min="0" value="0" 
-                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <input type="number" min="0" value="0"
-                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
-                <button type="button" class="btn btn-secondary" onclick="previewExamFeeSubmission()">预览提交</button>
-                <button type="button" class="btn btn-primary" onclick="submitExamFeeData()">提交填报</button>
-            </div>
-        </div>
-    `;
-}}</td>
-                                    <td>${course.courseName}</td>
-                                    <td>${course.courseLeader}</td>
-                                    <td>${course.teacher}</td>
-                                    <td>${course.teacherId}</td>
-                                    <td style="text-align: center;">
-                                        <input type="number" min="0" value="0" 
-                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <input type="number" min="0" value="0"
-                                               style="width: 80px; padding: 5px; text-align: center; border: 1px solid var(--medium-gray); border-radius: 4px;">
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--light-gray);">
-                <button type="button" class="btn btn-secondary" onclick="previewExamFeeSubmission()">预览提交</button>
-                <button type="button" class="btn btn-primary" onclick="submitExamFeeData()">提交填报</button>
-            </div>
-        </div>
-    `;
-}
-
-function previewExamFeeSubmission() {
-    const rows = document.querySelectorAll('#exam-fee-table-body tr');
-    const userName = users[currentUser].name;
-    const semester = document.getElementById('exam-semester-selector').options[document.getElementById('exam-semester-selector').selectedIndex].text;
-    let previewText = `命题费填报预览 - ${userName}\n学期：${semester}\n\n`;
-    let totalRows = rows.length;
-    let filledRows = 0;
-
-    rows.forEach(row => {
-        const courseCode = row.querySelector('td:first-child').textContent;
-        const courseName = row.querySelector('td:nth-child(2)').textContent;
-        const teacher = row.querySelector('td:nth-child(4)').textContent;
-        const comprehensiveCount = parseInt(row.querySelector('td:nth-child(6) input').value) || 0;
-        const regularCount = parseInt(row.querySelector('td:nth-child(7) input').value) || 0;
-        
-        if (comprehensiveCount > 0 || regularCount > 0) {
-            filledRows++;
-        }
-        
-        previewText += `${courseCode} ${courseName}\n`;
-        previewText += `  上课教师：${teacher}\n`;
-        previewText += `  综合题：${comprehensiveCount}份\n`;
-        previewText += `  非综合题：${regularCount}份\n\n`;
-    });
-
-    previewText += `总课程数：${totalRows}\n填报课程数：${filledRows}`;
-
-    alert(previewText);
-}
-
-function submitExamFeeData() {
-    const rows = document.querySelectorAll('#exam-fee-table-body tr');
-    const userName = users[currentUser].name;
-    const semester = document.getElementById('exam-semester-selector').options[document.getElementById('exam-semester-selector').selectedIndex].text;
-    let submissionData = [];
-
-    // 提交所有课程数据，包括为0的
-    rows.forEach(row => {
-        const courseCode = row.querySelector('td:first-child').textContent;
-        const comprehensiveCount = parseInt(row.querySelector('td:nth-child(6) input').value) || 0;
-        const regularCount = parseInt(row.querySelector('td:nth-child(7) input').value) || 0;
-        
-        submissionData.push({
-            courseCode,
-            comprehensiveCount,
-            regularCount
-        });
-    });
-
-    alert(`命题费填报提交成功！\n\n提交人：${userName}\n学期：${semester}\n课程数量：${submissionData.length}\n\n数据已保存，管理员可查看和导出。`);
-    
-    // 返回首页
-    backToDashboard();
-}
