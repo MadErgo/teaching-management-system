@@ -59,28 +59,26 @@
             <div id="teacher-dashboard">
                 <h2 style="margin-bottom: 20px;">我的任务</h2>
                 
-                <div class="dashboard-grid">
-                    <!-- 待办任务卡片 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">待办任务</span>
-                            <span class="badge" id="pending-count">0</span>
-                        </div>
-                        <ul class="task-list" id="pending-tasks">
-                            <!-- 任务将动态加载 -->
-                        </ul>
+                <!-- 待办任务卡片 -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">
+                        <span class="card-title">待办任务</span>
+                        <span class="badge" id="pending-count">0</span>
                     </div>
+                    <ul class="task-list" id="pending-tasks">
+                        <!-- 任务将动态加载 -->
+                    </ul>
+                </div>
 
-                    <!-- 已完成任务卡片 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">已完成任务</span>
-                            <span class="badge completed" id="completed-count">0</span>
-                        </div>
-                        <ul class="task-list" id="completed-tasks">
-                            <!-- 已完成任务将动态加载 -->
-                        </ul>
+                <!-- 已完成任务卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">已完成任务</span>
+                        <span class="badge completed" id="completed-count">0</span>
                     </div>
+                    <ul class="task-list" id="completed-tasks">
+                        <!-- 已完成任务将动态加载 -->
+                    </ul>
                 </div>
             </div>
 
@@ -128,6 +126,8 @@
                         </div>
                         <p style="color: var(--dark-gray); margin: 10px 0;">目标用户：课程负责人</p>
                         <div style="margin-top: 15px;">
+                            <button class="btn btn-secondary" onclick="downloadExamFeeTemplate()">下载数据模板</button>
+                            <button class="btn btn-primary" onclick="showExamFeeUpload()">上传课程数据</button>
                             <button class="btn btn-primary" onclick="publishBusiness('exam-fee')">发布任务</button>
                             <button class="btn btn-secondary" onclick="viewSubmissions('exam-fee')">查看提交</button>
                             <button class="btn btn-success" onclick="exportData('exam-fee')">导出数据</button>
@@ -162,6 +162,8 @@
             
             <div style="margin-bottom: 20px;">
                 <button class="btn btn-primary" onclick="showAddUser()">添加用户</button>
+                <button class="btn btn-primary" onclick="showBatchImportUsers()">批量导入用户</button>
+                <button class="btn btn-secondary" onclick="downloadUserTemplate()">下载导入模板</button>
                 <button class="btn btn-success" onclick="exportUsers()">导出用户列表</button>
             </div>
             
@@ -201,6 +203,78 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- 批量导入用户模态框 -->
+    <div id="batch-import-users-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>批量导入用户</h2>
+                <span class="close" onclick="closeModal('batch-import-users-modal')">&times;</span>
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>导入格式要求：</strong>工号 | 姓名 | 初始密码 | 角色(teacher/admin)
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('users-file-upload').click()">
+                <div>
+                    <strong>点击上传Excel文件</strong><br>
+                    或拖拽文件到此区域
+                </div>
+                <input type="file" id="users-file-upload" class="file-input" accept=".xlsx,.xls" onchange="handleUsersFileUpload(event)">
+            </div>
+            
+            <div id="users-upload-preview" class="hidden" style="margin-top: 20px;">
+                <h4>数据预览</h4>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="data-table" id="users-preview-table">
+                        <thead id="users-preview-header"></thead>
+                        <tbody id="users-preview-body"></tbody>
+                    </table>
+                </div>
+                <div style="text-align: right; margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="cancelUsersUpload()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmUsersUpload()">确认导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 命题费数据上传模态框 -->
+    <div id="exam-fee-upload-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>上传命题费课程数据</h2>
+                <span class="close" onclick="closeModal('exam-fee-upload-modal')">&times;</span>
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>表格格式要求：</strong>课序号 | 课程名 | 课程负责人 | 上课教师 | 工号
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('exam-fee-file-upload').click()">
+                <div>
+                    <strong>点击上传Excel文件</strong><br>
+                    或拖拽文件到此区域
+                </div>
+                <input type="file" id="exam-fee-file-upload" class="file-input" accept=".xlsx,.xls" onchange="handleExamFeeFileUpload(event)">
+            </div>
+            
+            <div id="exam-fee-upload-preview" class="hidden" style="margin-top: 20px;">
+                <h4>数据预览</h4>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="data-table" id="exam-fee-preview-table">
+                        <thead id="exam-fee-preview-header"></thead>
+                        <tbody id="exam-fee-preview-body"></tbody>
+                    </table>
+                </div>
+                <div style="text-align: right; margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="cancelExamFeeUpload()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmExamFeeUpload()">确认导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script></script>
 </body>
 </html>
