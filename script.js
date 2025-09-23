@@ -746,40 +746,6 @@ function cancelExamFeeUpload() {
 function confirmExamFeeUpload() {
     alert('命题费课程数据导入成功！\n\n已导入课程数据，现在可以发布任务。');
     closeModal('exam-fee-upload-modal');
-}-role">
-                            <option value="teacher">教师</option>
-                            <option value="admin">管理员</option>
-                        </select>
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('add-user-modal')">取消</button>
-                        <button type="submit" class="btn btn-primary">添加用户</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    document.getElementById('add-user-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const userId = document.getElementById('new-user-id').value;
-        const userName = document.getElementById('new-user-name').value;
-        const userPassword = document.getElementById('new-user-password').value;
-        const userRole = document.getElementById('new-user-role').value;
-        
-        // 添加到用户数据中
-        users[userId] = {
-            password: userPassword,
-            role: userRole,
-            name: userName
-        };
-        
-        alert(`用户添加成功！\n\n工号：${userId}\n姓名：${userName}\n初始密码：${userPassword}`);
-        closeModal('add-user-modal');
-    });
 }
 
 function exportUsers() {
